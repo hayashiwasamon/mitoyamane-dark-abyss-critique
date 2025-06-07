@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>映画批評『#ミトヤマネ』 | ミトヤマネの暗い底</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base Styling */
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #121212;
+            color: #E0E0E0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Animated Background Canvas */
+        #animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Header Styling */
+        header.site-header {
+            background-color: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid #333;
+        }
+
+        /* Article-specific typography */
+        .article-content h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-top: 3.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #4F4F4F;
+            scroll-margin-top: 5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .article-content h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #F2F2F2;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            padding-left: 1rem;
+            border-left: 3px solid #30A2FF;
+        }
+        
+        .article-content p {
+            line-height: 1.9;
+            margin-bottom: 1.75rem;
+            color: #BDBDBD;
+        }
+
+        .article-content a {
+            color: #30A2FF;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(48, 162, 255, 0.5);
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .article-content a:hover {
+            color: #89CFF0;
+            border-bottom-color: #89CFF0;
+        }
+
+        .article-content strong {
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+
+        .article-content blockquote {
+            margin: 2rem 0;
+            padding-left: 1.5rem;
+            border-left: 4px solid #4F4F4F;
+            color: #BDBDBD;
+            font-style: italic;
+        }
+
+        .article-content > div:first-of-type > p:first-of-type::first-letter {
+            float: left;
+            font-size: 5rem;
+            line-height: 0.8;
+            padding-right: 0.75rem;
+            padding-top: 0.25rem;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+
+        /* Table styling */
+        .custom-table-wrapper {
+            overflow-x: auto;
+            margin: 2.5rem 0;
+            border: 1px solid #333;
+            border-radius: 0.5rem;
+        }
+        .custom-table {
+            width: 100%;
+            min-width: 650px;
+            border-collapse: collapse;
+        }
+        .custom-table th, .custom-table td {
+            border: 1px solid #333;
+            padding: 1rem;
+            text-align: left;
+        }
+        .custom-table th {
+            background-color: #1F1F1F;
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+        .custom-table tr:nth-child(even) {
+            background-color: #1A1A1A;
+        }
+         .custom-table td:first-child {
+             font-weight: 500;
+              color: #f2f2f2;
+         }
+         
+        /* --- Gemini API Feature: Summary Button --- */
+        .summarize-btn {
+            background-color: rgba(48, 162, 255, 0.1);
+            border: 1px solid rgba(48, 162, 255, 0.3);
+            color: #30A2FF;
+            padding: 0.3rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            margin-left: 1rem;
+            white-space: nowrap;
+        }
+        .summarize-btn:hover {
+            background-color: rgba(48, 162, 255, 0.2);
+            color: #89CFF0;
+        }
+
+        /* --- Gemini API Feature: Modal --- */
+        #summary-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9998;
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+        }
+        #summary-modal {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 9999;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        #summary-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        #summary-modal-title {
+            color: #fff;
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+        #summary-modal-close-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        #summary-modal-close-btn:hover {
+            color: #fff;
+        }
+        #summary-modal-content {
+            color: #E0E0E0;
+            line-height: 1.8;
+        }
+        #summary-modal-content p {
+            margin-bottom: 1em;
+        }
+
+        /* --- Loading Spinner --- */
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #444;
+            border-bottom-color: #30A2FF;
+            border-radius: 50%;
+            display: block;
+            margin: 2rem auto;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Animated Background Canvas -->
+    <canvas id="animated-bg"></canvas>
+
+    <!-- Gemini AI Summary Modal -->
+    <div id="summary-modal-overlay">
+        <div id="summary-modal">
+            <div id="summary-modal-header">
+                <h3 id="summary-modal-title"></h3>
+                <button id="summary-modal-close-btn">&times;</button>
+            </div>
+            <div id="summary-modal-content">
+                <!-- AI-generated summary will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Site Header -->
+    <header class="site-header sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-white text-xl md:text-2xl font-bold tracking-wider">ミトヤマネの暗い底</span>
+                </div>
+                <nav class="hidden md:flex items-center space-x-6">
+                    <a href="#introduction" class="text-gray-300 hover:text-white transition-colors text-sm font-medium px-2 py-1">序論</a>
+                    <a href="#chapter1" class="text-gray-300 hover:text-white transition-colors text-sm font-medium px-2 py-1">I. 襞</a>
+                    <a href="#chapter2" class="text-gray-300 hover:text-white transition-colors text-sm font-medium px-2 py-1">II. バロック</a>
+                    <a href="#chapter3" class="text-gray-300 hover:text-white transition-colors text-sm font-medium px-2 py-1">III. AI</a>
+                    <a href="#chapter4" class="text-gray-300 hover:text-white transition-colors text-sm font-medium px-2 py-1">IV. 総合</a>
+                    <a href="#conclusion" class="text-gray-300 hover:text-white transition-colors text-sm font-medium px-2 py-1">結論</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Article -->
+    <main class="py-8 md:py-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <article>
+                <header class="mb-8 md:mb-12 text-center">
+                    <div class="mb-4">
+                        <span class="text-sm font-bold tracking-widest text-blue-400">REVIEW</span>
+                    </div>
+                    <h1 class="text-3xl md:text-5xl font-bold text-white leading-tight md:leading-tight">#ミトヤマネ</h1>
+                    <p class="mt-4 text-sm md:text-base text-gray-400">主観性、美的表象、そして技術的創造の「暗い底」を探求するための強力な文化的テクストとしての映画『#ミトヤマネ』。</p>
+                </header>
+
+                <figure class="my-8 md:my-12">
+                    <img src="https://placehold.co/1200x675/121212/333333?text=MITOYAMANE" 
+                         alt="映画『#ミトヤマネ』のコンセプトアート" 
+                         class="w-full h-auto rounded-lg object-cover"
+                         onerror="this.onerror=null;this.src='https://placehold.co/1200x675/121212/333333?text=Image+Not+Found';">
+                    <figcaption class="text-center text-xs text-gray-500 mt-2">
+                        Image: Placeholder / Concept Art
+                    </figcaption>
+                </figure>
+
+                <div class="article-content">
+                    <div id="introduction">
+                        <h2>
+                            序論：迷宮の露呈
+                            <button class="summarize-btn" data-target="introduction">✨ この章を要約</button>
+                        </h2>
+                        <p>宮崎大祐監督、玉城ティナ主演による映画『#ミトヤマネ』は、カリスマインフルエンサー「ミトヤマネ」こと山根ミトを主人公に、彼女の肖像がディープフェイク技術によって制御不能なほど拡散される様を描く現代的スリラーである。本作は、デジタルアイデンティティ、ソーシャルメディア時代における名声の本質、そして生成AIの急速な進化といった現代的な不安に鋭く切り込む。映画が掲げる「SNSの光と影」というテーマは、本批評がより複雑に解き明かそうとする二元論の出発点となる。</p>
+                        <p>本批評の中心的主張は、『#ミトヤマネ』が主観性、美的表象、そして技術的創造の「暗い底」――すなわち、曖昧で、生成的で、しばしば不穏な基盤――を探求するための強力な文化的テクストとして機能するということである。この探求は、ライプニッツ的＝ドゥルーズ的な「襞」、バロックおよびネオ・バロック的美学、そして生成AIの「暗い深淵」という相互に関連する概念を通じて行われる。「襞」は、ドゥルーズがライプニッツとバロックを解釈するために用いた主要な分析ツールとして提示され、インフルエンサーのペルソナとAIの内部構造双方の、層状で不透明な性質を理解するために拡張され得る。</p>
+                        <p>そもそも、映画のタイトル自体が『#ミトヤマネ』とハッシュタグを含んでいることは、本作を即座にデジタルでネットワーク化された演技的な領域に位置づける。これは、構築されたアイデンティティとアルゴリズムによる媒介というレンズを通じた分析にとって格好の対象となる。ハッシュタグは単なる様式的な選択ではなく、検索可能で、分類可能で、無限に複製可能なデジタル実体を意味する。この点は、ディープフェイクを巡る映画のプロットやミトのイメージの拡散と結びつき、データとアルゴリズムに基づいて作動するAIに関する議論を予示する。したがって、「暗い底」とは、この過剰に可視化されたハッシュタグ付きアイデンティティの下に潜む、目に見えないインフラストラクチャーと心理的潮流と見なすことができる。さらに、本批評のタイトル「ミトヤマネの暗い底」は、ライプニッツのモナドの「暗い底」に直接的に呼応しており、映画が、おそらく意図せずに、知覚の起源、アイデンティティ、そして今や技術システムに映し出されつつある実存の隠された側面に関する深遠な哲学的問いに触れていることを示唆する。インフルエンサーのアイデンティティが構築され、その後技術的に乗っ取られるという物語は、「自己」とは何か、そしてその表層的な提示の下に何が横たわっているのかを探求するための現代的なシナリオを提供する。「暗い底」は単に否定的なものではなく、ライプニッツの「暗い底」がモナドの知覚を引き出す源であるように、曖昧な源泉なのである。</p>
+                    </div>
+
+                    <div id="chapter1">
+                        <h2>
+                           I. ライプニッツの襞とインフルエンサーのモナド
+                           <button class="summarize-btn" data-target="chapter1">✨ この章を要約</button>
+                        </h2>
+                        <p>ライプニッツの哲学におけるモナドとは、単純で窓を持たない実体でありながら、その独自の視点から宇宙全体を「表現」するものである。ミトヤマネのオンラインペルソナは、このモナド的表現の一形態として分析できる。それは、キュレーションされ、自己完結した世界を外部に投影し、フォロワーやトレンドのデジタル宇宙を反映し屈折させる。彼女の「ミトヤマネは透明なのにけばけばしくて無関心」という発言は、個別の実体でありながら同時に投影の表面でもあるという、この逆説的な性質を示唆している。彼女がSNS投稿を通じて生きる姿の描写は、この「表現」として生きる人生という考えを補強する。</p>
+                        <p>ライプニッツによれば、モナドはその「暗い底」、すなわち「微小知覚」（明確な知覚や統覚が生じる以前の、微細で不明瞭な知覚）からなる無意識的な基盤を持つ。この「暗い底」において、「無数の微細な知覚が生起し、ひしめいている」のである。ミトの内面生活――彼女の表明されない不安、ペルソナ維持のプレッシャー、公的イメージと私的自己との間の潜在的な断絶――は、これらの「暗い底」に類似するものとして解釈できる。映画は、妹ミホの支えでありながらもどこか懸念を抱いているかのような役割や、ディープフェイクアプリがもたらす不穏な結果を通じて、これを暗示している。映画の物語構造が「断片的なシークエンスを繋いで構成している」とされることは、公的なアイデンティティとして凝固する以前の、これらの「微小知覚」の混沌とし、未だ秩序化されていない性質を反映しているのかもしれない。</p>
+                        <p>ドゥルーズによるライプニッツの襞の解釈を導入すると、モナドは空虚という意味で単純なのではなく、むしろ無限に折り畳まれ、その内部の襞の中に全世界を含んでいる。「モナドもまた内に多数の襞を含みもつ」のである。これはミトのアイデンティティに関連づけられる。インフルエンサーとしてのペルソナは「表面」であるが、それは無限に複雑で折り畳まれた内面性によって産出され、またそれを隠蔽している。ディープフェイクの危機は、ある種の襞の暴力的な展開、あるいは外部化と見なすことができ、彼女の「表現」に対するコントロールの喪失へと繋がる。ディープフェイクアプリに対して、ミトがその状況を自身の人気に繋がるとして「喜ぶミト」である一方、ミホが「危惧していた」という事実は、名声とイメージに関する彼女の精神内部の複雑な、おそらくは矛盾した襞を示している。</p>
+                        <p>ミトの「窓なき」モナド的な存在（彼女のキュレーションされたオンライン世界）は、彼女をテクノロジーの「暗い」側面に対して特に脆弱にしている。彼女のアイデンティティは、真の外部からの入力なしに（モナドの窓のなさに類似して）外部への「表現」に過度に投資されているため、その表現の技術的操作（ディープフェイク）は深刻な実存的脅威となり、彼女の存在のまさに基盤を揺るがす。ライプニッツのモナドは「窓がない」とされ、外部から情報を受け取るのではなく内部から知覚を生成する。ミトのインフルエンサーペルソナも同様に、注意深くコントロールされた投影である。ディープフェイクアプリが彼女のイメージを奪うとき、それはあたかも外部の力がこの「窓なき」存在に手を伸ばし、その内部の「プログラム」あるいは「暗い底」を操作するかのようであり、アイデンティティの危機へと導く。これは、コントロールされたデジタル自己呈示に大きく依存するアイデンティティが、その呈示を模倣したり乗っ取ったりできるテクノロジーに直面した際に、本質的に脆弱であることを示唆している。</p>
+                        <p>妹のミホは、より地に足のついた、おそらくより「展開された」あるいは統合された意識、あるいはミト自身の精神の「良心」や認識されていない「暗い底」を表現していると解釈できる。彼女の懸念は、ディープフェイクの人気を当初は受け入れていたミトとは対照的であり、ミト自身が抑圧しているか、あるいは折り畳んでしまっているかもしれない倫理的・心理的複雑さを浮き彫りにする。ミホは「陰で支えていた」存在である。ドゥルーズ的な意味では、彼女はミトの表面を支える重要な「襞」であるかもしれない。ディープフェイクに対する彼女の懸念は、ミトの当初の喜びと対比され、ミホがミトの無視する「暗い底」を認識していることを示唆する。これはミホを単なる脇役としてではなく、ミトの折り畳まれたアイデンティティの精神的経済を理解する上で鍵となる要素として位置づけ、脅かされている倫理的あるいは真正な核を代表している可能性がある。</p>
+                        <p>映画の非線形的で「断片的」な物語スタイル、監督が「スマホの中のランダムな動画の連鎖」のようだと述べている点は、ミトのライプニッツ的な「暗い底」内部の、首尾一貫した公的イメージへと統合される以前の、混沌とし、充満する「微小知覚」を意図的に形式的に反映したものであるかもしれない。観客は彼女の意識の生々しい素材を経験するのである。ライプニッツの「暗い底」は「無数の微細な知覚」で満たされている。監督は映画が「スマホの中のランダムな動画の連鎖」のようであり、「ひとつひとつのシーンで完結している部分があります」と述べている。この形式的選択は、単にSNS文化を反映する以上に、ミトの見かけ上統一されたペルソナが出現する源泉である「暗い底」の、認識以前の、断片的で圧倒的な性質を表現する方法であるかもしれない。観客はしたがって、磨き上げられた表面を観察するだけでなく、この「暗い底」へと投げ込まれるのである。</p>
+                    </div>
+
+                    <div id="chapter2">
+                        <h2>
+                            II. バロック的ファンタスマゴリア
+                            <button class="summarize-btn" data-target="chapter2">✨ この章を要約</button>
+                        </h2>
+                        <p>バロック芸術の核となる特徴には、劇的効果、イリュージョニズム（トロンプ・ルイユ）、精巧な装飾、ダイナミズム、そして現実と外観の相互作用への魅惑が含まれる。『#ミトヤマネ』におけるディープフェイク技術は、現代的なデジタルのトロンプ・ルイユとして位置づけられ、真正なものと人工的なものの境界線を曖昧にする超現実的なイリュージョンを創り出す。ミトの顔が至る所に拡散する様は、このイリュージョニスティックな力の極端な形態である。バロック建築における「巧みな陰影で立体的に見える天井画」は、人間の外観を説得力を持って模倣するAI生成の顔に類似点を見出す。</p>
+                        <p>オマール・カラブレーゼが提唱するネオ・バロックの概念は、「名人芸への渇望、熱狂的なリズム、不安定さ、多次元性、そして変化」を特徴とする「時代のしるし」として論じられる。これには、「謎めいたもの、神秘的なもの、複雑なもの、解き難いもの、迷宮的なものへの嗜好」が含まれ、「曖昧さや定義の欠如…混濁や暗闇、無定形さや歪み」へと向かう傾向がある。『#ミトヤマネ』は、このネオ・バロック的レンズを通して分析できる。</p>
+                        <blockquote><strong>過剰と拡散:</strong> ディープフェイクアプリによるミトのイメージの制御不能な広がり。<br>
+                            <strong>不安定性と断片化:</strong> 映画の潜在的に非線形的で「断片的なシークエンス」や、観客に「濃密な短い時間を体験してもらいたい」という監督の意図は、ネオ・バロックの「熱狂的なリズム」を反映している。<br>
+                            <strong>名人芸と人工性:</strong> ディープフェイク技術そのものが、現実を模倣するデジタルな名人芸を誇示している。<br>
+                            <strong>多次元性:</strong> ミトの顔の複数の、同時的な存在。<br>
+                            <strong>混濁・暗闇:</strong> この技術的拡散の倫理的曖昧さと「暗い底」。「お人形さんのような玉城ティナ」や、「もう誰がミトヤマネを演っても同じ」という考えは、この定義されたアイデンティティの喪失を物語っている。</blockquote>
+                        <p>ドゥルーズの襞とバロック美学との関連を再訪すると、「バロックは「無限に至る襞」と定義される」。バロックのイリュージョンと人工性への魅惑は、単に表面に関するものではなく、表面と深層、外観と現実との間の複雑で折り畳まれた関係に関するものである。ミトの表面的なイメージがディープフェイク技術によって折り畳まれ、複製され、歪められる映画の物語は、このバロック的な絡み合いを具現化している。バロック的技巧の「暗さ」は、ディープフェイクを駆動する目に見えないアルゴリズムやデータのように、イリュージョンを創り出す隠されたメカニズムと構造に存在する。「ツインタワーの合成カット」が「ひと目で合成とわかる」にもかかわらず「明確な結節点」であるという監督のコメントは、ネオ・バロック的なジェスチャーと見なすことができる。それは、意味を運びながらも人工性をあからさまに誇示する、映画の織物における一つの襞である。</p>
+                        <p>映画は、デジタルディープフェイクイリュージョンの「洗練さ」（バロック的な技巧の完璧さ）と、他の制作側面における「チープさ」（「オラキオさんのロケの風がえげつなかったり」といった批評家の指摘）との間の緊張関係を示しているかもしれない。これはそれ自体がネオ・バロック的な特徴であり得る。すなわち、超現実主義がグリッチや明白な人工性と共存する、不完全さの意図的な受容、あるいはデジタル美学の不均一性への言及である。バロック芸術はしばしば圧倒的でシームレスなイリュージョンを目指す。カラブレーゼが記述するネオ・バロックは、「不安定さ」や「断片化」を受け入れることができる。映画は洗練されたディープフェイクを提示するが、監督は特定の合成ショットにおける「チープさ」を認めており、批評家は「適当感が否めないシーンの多さ」を指摘している。これは必ずしも欠陥ではなく、ネオ・バロック的な特徴であるかもしれない。ハイテクなイリュージョンと、イリュージョンを破壊する瞬間との並置は、その構築の「縫い目」や「襞」を露呈させ、いくつかのバロック作品が自身の技巧性を明らかにすることに似ている。</p>
+                        <p>ネオ・バロック的な「反復の詩学」と「微細な変奏によって生み出されるテクストにおける快楽」（カラブレーゼ）は、インフルエンサー文化（類似しているがわずかに異なるコンテンツの絶え間ない投稿）の論理とディープフェイクの性質（単一の顔の無限の変奏）を直接的に反映している。したがって、映画はネオ・バロック現象に関するネオ・バロック的テクストとなる。カラブレーゼは、ネオ・バロック的文脈では「すべては既に語られてしまった」ため、「反復の詩学」が生じ、快楽は「微細な変奏」から生まれると指摘している。インフルエンサー文化はこれによって繁栄する。ミトヤマネは毎日投稿し、おそらくテーマやルックに変化をつけている。ディープフェイクは究極の「変奏を伴う反復」である。同じ顔、無限の文脈。映画自体がこれを描写することで、このネオ・バロック的な増殖と微妙な差異化の文化的論理に関するメタ批評となる。</p>
+                        <p>バロックの「迷宮的」なものや「アイデンティティの混乱」への魅惑は、単なる美的選択ではなく、より深い認識論的不確実性の反映である。『#ミトヤマネ』では、これはテクノロジーによって増幅され、ディープフェイクの迷宮が「真の」ミトをほとんど特定不可能にし、現代の真正性の危機を反映している。ネオ・バロック美学には、「謎めいたもの、神秘的なもの、複雑なもの、解き難いもの、迷宮的なものへの嗜好」や「アイデンティティの混乱」が含まれる。ミトの顔が至る所に現れ、「どれが本当の自分か分からなくなってしまったりする」という問いを伴う映画のプロットは、デジタルの迷宮を創り出す。これは単に劇的効果のためではなく、テクノロジー自体（ディープフェイク）がバロック的な存在論的・認識論的混乱状態、すなわち真実とアイデンティティが流動的で不確かになる「暗い底」を誘発することを示唆している。</p>
+                    </div>
+
+                    <div id="chapter3">
+                        <h2>
+                            III. アルゴリズムの深淵
+                            <button class="summarize-btn" data-target="chapter3">✨ この章を要約</button>
+                        </h2>
+                        <p>生成AIは、「潜在空間」――そこから新しい出力（画像、テキスト）が生成される、データの圧縮された高次元表現――に依存している。この空間はしばしば「ブラックボックス」であり、その内部の働きはユーザーや開発者にとってさえ不透明である。この「潜在空間」と、ライプニッツの「暗い底」あるいはドゥルーズの「暗い基盤」との間には直接的な類似性が描かれる。それは、AIによって生成されたイメージ／ミトのディープフェイクされた顔といった「形象」が、あたかも無から現れるかのように出現する、目に見えない折り畳まれた領域である。「暗い底で無数の微細な知覚が生起し、ひしめいている」という記述は、潜在空間内の膨大なデータセットと複雑な特徴ベクトルに比喩的に結びつけることができる。映画のディープフェイクアプリは、そのようなアルゴリズムの深淵を通じて作動する。</p>
+                        <h3>生成AIの「暗い底」がはらむ危険性</h3>
+                        <p><strong>アルゴリズム的バイアス:</strong> AIモデルは、訓練データに存在するバイアスを永続させ、増幅させる可能性があり、不公平またはステレオタイプ的な出力を生み出す。これは『#ミトヤマネ』の要約では明確にテーマとして述べられていないが、ディープフェイクアプリが偏った、あるいは有害な表象を作り出すためにどのように悪用され得るかについて、本批評は推測することができる。<br>
+                            <strong>グリッチ:</strong> AIが生成したコンテンツは「グリッチ」――デジタルイリュージョンの織物における裂け目のような、生成プロセスの人工性を明らかにする予期せぬエラーやアーティファクト――を示すことがある。これらのグリッチは、「暗い底」が制御不能な形で一時的に表面化する瞬間である。<br>
+                            <strong>非真正性と「ハルシネーション」:</strong> AIは説得力のあるフェイクを生成することができ、情報を「ハルシネーション」（幻覚）することがあり、真実と現実に関する深遠な問いを提起する。ミトが自身の増殖するディープフェイクに直面して経験するアイデンティティの危機は、この直接的な結果である。</p>
+                        <p>ジャン＝フランソワ・リオタールの著作『言説、形象』における「ディスクール」（可読なもの、言語的なもの、概念的なもの）と「フィギュール」（視覚的なもの、感覚的なもの、リビドー的なもの、容易な言語化に抵抗するディスクールの「他者」）の概念を導入する。リオタールは、「見ることと語ること、言葉と像のあいだで、意味はどのように生まれ、欲望は何を成就するのか」を探求する。これを生成AIに適用すると、テキストプロンプト（ディスクール）がAIに入力され、AIはその潜在空間から画像（フィギュール）を生成する。この変換のプロセスはしばしば不透明であり、「言説と形象の空間的厚み」である。『#ミトヤマネ』では、ミトのオリジナルの「ディスクール」（彼女のキュレーションされたオンラインペルソナ、彼女の言葉、彼女の意図したイメージ）がAIによって取り込まれ、無数の「フィギュール」（ディープフェイクされた画像）へと変換される。それはしばしば彼女のコントロールと意図を逸脱し、このディスクールからフィギュールへの変換の「暗い底」を明らかにする。「欲望と形象的なものとの共謀」は、ユーザーがミトのAI生成された顔に自身の欲望をどのように投影するかという点で探求され得る。</p>
+                        <p>AIの潜在空間の「ブラックボックス」的性質は、単なる技術的限界ではなく、深遠な存在論的不安の源泉である。生成のプロセスが曖昧であるため、出力（ディープフェイク）は、ミトの増殖するイメージに見られるように、準魔術的で、ほとんど怪物的な性質を帯び、人間の意図とコントロールから切り離される。これは、AIが私たちの現実創造により深く統合されるにつれて、私たちが理解とコントロールをこれらの「暗い底」に譲り渡しつつあることを示唆している。潜在空間はAIが「学習」し生成する場所であり、「ブラックボックス」である。『#ミトヤマネ』では、ディープフェイクアプリがミトのイメージを解き放つ。この生成の「方法」が曖昧であるため（暗い底のように）、その「結果」（無限のミト）は制御不能で不穏に感じられる。これは単に偽の画像に関する問題ではなく、私たちが完全には把握していないプロセスの知覚される自律性に関する問題であり、エージェンシーと創造の本質に関する不安へと繋がる。</p>
+                        <p>AIがシームレスなリアリズム（ある種の「形象」の完璧さ）を目指す一方で、「グリッチ」は意図せざる「抑圧されたものの回帰」として機能する。すなわち、人工性、生成の「暗く、厄介な」プロセスが、磨き上げられた表面を突き破る瞬間である。これは、身近なもの（ミトの顔）が不気味に異質なものとなる、現代的な形態の不気味の谷（uncanny）と見なすことができる。AIは現実的な画像を生成することを目指している。グリッチはこのリアリズムを妨げるエラーである。『#ミトヤマネ』の文脈では、「グリッチ」を起こしたディープフェイクのミトは二重に不穏であろう。それは単なる偽物ではなく、「壊れた」偽物だからである。この「破壊」は、根底にある人工性、コードとデータの「暗い底」を明らかにする。それは、「形象」が「ディスクール」あるいは意図されたイリュージョンから完全に逃れること、あるいはそれを完璧に表現することに失敗し、不気味の谷効果を生み出すのである。</p>
+                        <p>リオタールが「形象的なものはいかにして言説のうちに現前しているか」を探求する方法は、AIを理解する上で決定的に重要となる。AIの「暗い底」とは、まさにこの翻訳不可能なギャップ、プロンプト（ディスクール）と画像（フィギュール）の間のこの「空間的厚み」である。映画は、このギャップが制御不能な、あるいは倫理的に問題のある「フィギュール」を生み出す際の社会的結果をドラマ化する。リオタールは言語／ディスクールと画像／フィギュールの関係に関心を寄せている。生成AIはこれの直接的な現れである。テキストプロンプト（ディスクール）からAIプロセス（不透明な、「暗い」潜在空間）を経て画像（フィギュール）へと至る。ここでの「暗い底」とは、ディスクールをフィギュールへと翻訳するAIの内部の、非言語的な「推論」あるいはパターンマッチングである。『#ミトヤマネ』は、AIの「暗い底」に根ざしたこの翻訳プロセスが、広範な画像操作とアイデンティティの危機をもたらす際の社会的影響を示している。映画は、「フィギュール」（ミトの顔）がそのオリジナルの「ディスクール」（ミトのコントロールとアイデンティティ）から切り離されることへの不安を探求している。</p>
+                    </div>
+
+                    <div id="chapter4">
+                         <h2>
+                            IV. 絡み合う襞
+                            <button class="summarize-btn" data-target="chapter4">✨ この章を要約</button>
+                        </h2>
+                        <p>「襞」という概念は、本批評全体を貫く統一的な糸として機能する。</p>
+                        <blockquote><strong>個人の主観性におけるライプニッツ的／ドゥルーズ的な襞</strong>（ミトの内的複雑性、彼女の「暗い底」）。<br>
+                        <strong>美的技巧におけるバロック的／ネオ・バロック的な襞</strong>（映画のテーマや可能性のあるスタイルにおけるイリュージョン、過剰、表面と深層の相互作用）。<br>
+                        <strong>生成AIにおけるアルゴリズム的な襞</strong>（不透明な潜在空間、データと処理の折り畳まれた層）。</blockquote>
+                        <p>『#ミトヤマネ』においては、これらの異なる秩序の襞は分離しておらず、むしろ複雑に絡み合っており、自己、表象、テクノロジーが深く結びついた現代的状況を反映している。ミトのアイデンティティは、これらの絡み合った襞の産物である。</p>
+                        <p>映画の視覚スタイル、例えばSNSコンテンツのための縦型フレーミングの使用や、その潜在的に断片的で「ザッピングのようなスピード」は、この折り畳まれ、層状化し、急速に変化する現代的現実の感覚を形式的に実行しているかもしれない。宮崎監督が自身の映画製作を「大きな塊、概念を皆に渡して、「じゃあこれをそれぞれで好きに削ってみてください」っていう作り方をしていて。彫刻もできたものを見ると角度によって見え方が全然違うじゃないですか。だから自分の映画は彫刻に近いなと。」と述べていることは、多様な解釈を招く多面的で折り畳まれた対象を強く示唆している。</p>
+                        <h3>ミトヤマネの暗い底</h3>
+                        <p>アーヴィング・ゴフマンの「日常生活における自己呈示」の理論を簡潔に組み込む。そこでは個人は役割を演じ、印象を管理する役者と見なされる。ミトヤマネは、インフルエンサーとしての自己を演じるこの極端な例である。これを日本の文化的コンセプトである「本音と建前」に結びつける。インフルエンサーペルソナは高度に構築された「建前」であり、「暗い底」は抑圧された「本音」あるいはこの仮面を維持することへの不安であり得る。ディープフェイクの危機は、これらの層の間の望ましくない衝突、演じられた自己の引き裂きを強いる。</p>
+                        <p>以下の表は、「暗い底」という中心テーマが、ライプニッツ、バロック、生成AIという異なる領域、そして映画『#ミトヤマネ』の中でどのように顕在化するかを視覚的に要約するものである。</p>
+                        <div class="custom-table-wrapper">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>概念領域</th>
+                                        <th>「暗い底」／「襞」の性質</th>
+                                        <th>『#ミトヤマネ』における顕在化</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>ライプニッツ的モナド</strong></td>
+                                        <td>「暗い底」、微小知覚、知覚の無意識的基盤、無限に折り畳まれた内面性</td>
+                                        <td>ミトの抑圧された不安、ペルソナの不明瞭な基盤、公的イメージと私的自己の間のギャップ、ディープフェイクによって露呈／侵害される複雑性</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>バロック／ネオ・バロック的技巧</strong></td>
+                                        <td>イリュージョン、過剰、表面と深層の相互作用、隠されたメカニズム、迷宮性、アイデンティティの混乱</td>
+                                        <td>ディープフェイクによる現実と虚構の曖昧化、ミトのイメージの制御不能な拡散、映画の断片的構造、明白な人工性と意味の共存（例：ツインタワーのショット）、アイデンティティの危機</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>生成AI</strong></td>
+                                        <td>不透明な潜在空間、ブラックボックス、アルゴリズム的バイアス、グリッチ、非真正性、ディスクールとフィギュールの間の翻訳不可能なギャップ、データの折り畳まれた層</td>
+                                        <td>ディープフェイクアプリの不可解な作動、ミトの顔の無数の変奏の生成、制御不能なイメージの拡散、アイデンティティの断片化、真正性の喪失、AIによる「ミト」の表象がオリジナルのミトから乖離する可能性</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p>この「暗い底」は単なる否定的な空間ではなく、むしろ可視で既知の表面（ミトのペルソナ、AIの出力、バロック的イリュージョン）のまさに可能性の条件である。映画は、これらの深層を完全に照らし出す、あるいはコントロールしようとする試みが無益であり、おそらく危険であり、ミトが経験するようなアイデンティティの崩壊へと繋がることを示唆している。ライプニッツのモナドはその「暗い底」から引き出す。バロック的イリュージョンは隠されたメカニズムに依存する。AIは不透明な潜在空間から生成する。これら三者すべてにおいて、「暗い底」は生成的である。ミトが自身のイメージ（表面）を完璧にコントロールしようとする試みは、AIの「暗い底」（ディープフェイク）がその表面の制御不能なバージョンを増殖させるときに粉砕される。これは、私たちのアイデンティティと現実は常にこれらの曖昧で折り畳まれた深層によって共同構成されており、完全な透明性やコントロールへの欲望は危険なイリュージョンであることを示唆している。</p>
+                        <p>宮崎監督の映画に対する「彫刻」というアナロジーは、「襞」の概念と完璧に一致する。彫刻はすべて表面であるが、これらの表面は内的な複雑性を明らかにし隠蔽する襞である。映画『#ミトヤマネ』自体が「折り畳まれた対象」となり、本批評はライプニッツ的、バロック的、AI的といった様々な角度からそれを部分的に展開し解釈しようと試みている。監督は自身の映画が、異なる角度から見ると異なる外観を持つ彫刻のようであると述べている。ドゥルーズはバロックを、複雑な表面と深層を創造する襞の芸術として記述している。したがって、宮崎の芸術的アプローチは本質的に「バロック的」あるいは「折り畳まれた」ものと見なすことができる。映画『#ミトヤマネ』は平板な物語ではなく、複雑で多層的な対象であり、本批評の課題は、選択された理論的レンズによって明らかにされるその様々な「面」あるいは「襞」を探求することである。</p>
+                        <p>ゴフマンの「自己呈示」は普遍的な社会学的概念であるが、日本のインフルエンサーと日本映画という文脈における日本の文化的枠組み「本音と建前」との交差は、デジタルアイデンティティに関する普遍的な不安に特定の文化的層を加える。「暗い底」は、公的な演技と私的な現実との間に強い区別がある文化において、特に共鳴するかもしれない。ゴフマンの理論は一般的に自己呈示に関するものである。「本音と建前」は、公的な仮面と私的な真実という特定の日本の文化的コンセプトである。『#ミトヤマネ』は日本のインフルエンサーに関する日本映画である。ミトが過剰演技的なオンライン空間で自身の「建前」を維持することへのプレッシャー、そしてこれが技術的に侵害されたときの危機は、この文化的ダイナミクスの強化版として理解することができ、そこでは「暗い底」がこの演技の緊張と、「本音」が露呈したり歪められたりすることへの恐怖である。</p>
+                    </div>
+
+                    <div id="conclusion">
+                        <h2>
+                           結論：暗闇への凝視
+                           <button class="summarize-btn" data-target="conclusion">✨ この章を要約</button>
+                        </h2>
+                        <p>本批評は、映画『#ミトヤマネ』が、自己、人工性、そしてAIの「暗い底」を、「襞」というレンズを通して寓話的に探求する機能を果たしたことを明らかにした。本作は、アイデンティティがますます不透明なテクノロジーによって媒介され、表象の折り畳まれた層を通じて構築される現代的状況を描写している。映画の結末、そしてミトの最終的な運命は、この観点から分析されるべきである。それは絶望、諦観、あるいは自己の新たな理解を提供するのだろうか。</p>
+                        <p>「暗い底」は、単なる空虚あるいは純粋に否定的な空間ではなく、生成的ではあるが不穏な基盤である。それは知覚の源泉（ライプニッツ）、イリュージョンの隠されたエンジン（バロック）、そしてデジタル創造の不透明な源泉（AI）である。映画は、これらのテーマへの取り組みを通じて、観客をこの暗闇へと凝視するよう誘い、現実の「底」がますます曖昧で、複雑に折り畳まれ、技術的に媒介されているように見える時代において、人間であるとはどういうことかを考察するよう促す。「ポップな狂気が広がり」という表現は、この不穏な生成的力のひとつの現れかもしれない。</p>
+                        <p>映画は最終的に、「暗い底」が、自然のものであれ人工のものであれ、実存の排除不可能な側面であることを示唆している。完全に透明でコントロール可能な自己あるいは現実への探求は現代のイリュージョンであり、これらの「襞」の不透明性を受け入れることが、より持続可能で、たとえ不穏であっても、前進するための道であるかもしれない。映画は、ミトの精神やAIの「暗い底」が噴出したときに起こる崩壊を示している。これは単にテクノロジーに関する教訓的な物語ではなく、おそらくより深い哲学的言明である。もし「暗い底」が基礎的であるならば（ライプニッツ、AIの潜在空間）、それらは根絶できない。映画の「衝撃の結末」は、この排除不可能な曖昧さとの対決を強いるかもしれず、真の自己理解とは、それらから逃れようとするのではなく、これらの暗く折り畳まれた基盤を認めることを含むことを示唆している。</p>
+                        <p>『#ミトヤマネ』は、これらの複雑な問題を寓話化することによって、私たちのアイデンティティと現実を形成するテクノロジーへの批判的関与を呼びかけるものとして機能する。「暗闇」は麻痺へと恐れるべきものではなく、特にAIが進化し続ける中で、継続的な倫理的、哲学的、そして美学的尋問を必要とする場として理解されるべきである。映画は不穏なシナリオを提示する。これは娯楽以上のものとして機能し、AI倫理、アイデンティティ、そして未来について考えることを促す文化的アーティファクトである。AIの「暗い底」（バイアス、不透明性、誤用の可能性）は、継続的な批判的警戒を必要とする。映画は、この批判的言説に貢献し、観客に新しいテクノロジーの「輝かしい表面」の向こう側を見るよう促していると見なすことができる。</p>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <footer class="mt-16 border-t border-t-gray-800">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
+            <p>&copy; 2024 ミトヤマネの暗い底. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- Vector class for 2D operations ---
+        class Vector {
+            constructor(x = 0, y = 0) { this.x = x; this.y = y; }
+            add(v) { this.x += v.x; this.y += v.y; return this; }
+            sub(v) { this.x -= v.x; this.y -= v.y; return this; }
+            mult(s) { this.x *= s; this.y *= s; return this; }
+            div(s) { if (s !== 0) { this.x /= s; this.y /= s; } return this; }
+            mag() { return Math.sqrt(this.x * this.x + this.y * this.y); }
+            normalize() { const m = this.mag(); if (m > 0) { this.div(m); } return this; }
+            limit(max) { if (this.mag() > max) { this.normalize().mult(max); } return this; }
+            static sub(v1, v2) { return new Vector(v1.x - v2.x, v1.y - v2.y); }
+            static dist(v1, v2) { const dx = v1.x - v2.x; const dy = v1.y - v2.y; return Math.sqrt(dx * dx + dy * dy); }
+        }
+
+        // --- Boid class ---
+        class Boid {
+            constructor(x, y, settings) {
+                this.settings = settings;
+                this.position = new Vector(x, y);
+                this.velocity = new Vector(Math.random() * 2 - 1, Math.random() * 2 - 1);
+                this.velocity.normalize().mult(Math.random() * (this.settings.speedLimit / 2) + (this.settings.speedLimit / 2));
+                this.acceleration = new Vector();
+                this.maxForce = 0.2;
+                this.assignColor();
+            }
+            assignColor() {
+                switch (this.settings.colorMode) {
+                    case 'color1': this.color = this.settings.color1; break;
+                    case 'color2': this.color = this.settings.color2; break;
+                    case 'randomMix': this.color = Math.random() < 0.5 ? this.settings.color1 : this.settings.color2; break;
+                    case 'gradient': 
+                        const ratio = this.position.y / window.innerHeight; 
+                        this.color = this.interpolateColor(this.settings.color1, this.settings.color2, ratio); 
+                        break;
+                    default: this.color = this.settings.color1;
+                }
+            }
+            interpolateColor(color1, color2, factor) {
+                const c1 = this.hexToRgb(color1); const c2 = this.hexToRgb(color2); if (!c1 || !c2) return '#000000';
+                const r = Math.round(c1.r + factor * (c2.r - c1.r)); 
+                const g = Math.round(c1.g + factor * (c2.g - c1.g)); 
+                const b = Math.round(c1.b + factor * (c2.b - c1.b));
+                return `rgb(${r},${g},${b})`;
+            }
+            hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+            }
+            edges() {
+                if (this.position.x > window.innerWidth) this.position.x = 0; else if (this.position.x < 0) this.position.x = window.innerWidth;
+                if (this.position.y > window.innerHeight) this.position.y = 0; else if (this.position.y < 0) this.position.y = window.innerHeight;
+            }
+            applyForce(force) { this.acceleration.add(force); }
+            flock(boids) {
+                let separationForce = new Vector(); 
+                let alignmentForce = new Vector(); 
+                let cohesionForce = new Vector();
+                let totalSeparation = 0, totalAlignment = 0, totalCohesion = 0;
+                const separationRadius = this.settings.separation; 
+                const perceptionRadius = 50;
+
+                for (let other of boids) {
+                    if (other === this) continue;
+                    let d = Vector.dist(this.position, other.position);
+                    if (d > 0 && d < separationRadius) {
+                        let diff = Vector.sub(this.position, other.position); 
+                        diff.normalize().div(d); 
+                        separationForce.add(diff); 
+                        totalSeparation++;
+                    }
+                    if (d > 0 && d < perceptionRadius) {
+                        alignmentForce.add(other.velocity); totalAlignment++;
+                        cohesionForce.add(other.position); totalCohesion++;
+                    }
+                }
+
+                if (totalSeparation > 0) { separationForce.div(totalSeparation).normalize().mult(this.settings.speedLimit).sub(this.velocity).limit(this.maxForce).mult(this.settings.separationFactor); }
+                if (totalAlignment > 0) { alignmentForce.div(totalAlignment).normalize().mult(this.settings.speedLimit).sub(this.velocity).limit(this.maxForce).mult(this.settings.alignmentFactor); }
+                if (totalCohesion > 0) { cohesionForce.div(totalCohesion).sub(this.position).normalize().mult(this.settings.speedLimit).sub(this.velocity).limit(this.maxForce).mult(this.settings.cohesionFactor); }
+                
+                this.applyForce(separationForce); 
+                this.applyForce(alignmentForce); 
+                this.applyForce(cohesionForce);
+            }
+            update() {
+                this.velocity.add(this.acceleration).limit(this.settings.speedLimit);
+                this.position.add(this.velocity);
+                this.acceleration.mult(0);
+                this.edges();
+                if (this.settings.colorMode === 'gradient') { this.assignColor(); }
+            }
+            draw(ctx) {
+                ctx.fillStyle = this.color;
+                const angle = Math.atan2(this.velocity.y, this.velocity.x);
+                ctx.save();
+                ctx.translate(this.position.x, this.position.y);
+                ctx.rotate(angle);
+                ctx.beginPath();
+                ctx.moveTo(this.settings.birdSize, 0);
+                ctx.lineTo(-this.settings.birdSize / 2, -this.settings.wingSpan / 2);
+                ctx.lineTo(-this.settings.birdSize / 2, this.settings.wingSpan / 2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // --- Background Animation Script ---
+        const bgCanvas = document.getElementById('animated-bg');
+        const bgCtx = bgCanvas.getContext('2d');
+        let flock = [];
+        const bgSettings = {
+            backgroundColor: '#121212',
+            backgroundAlpha: 0.15,
+            color1: '#30A2FF',
+            color2: '#E0E0E0',
+            colorMode: 'randomMix',
+            quantity: 75,
+            birdSize: 1.5,
+            wingSpan: 2,
+            speedLimit: 1.5,
+            separation: 35,
+            separationFactor: 1.5,
+            alignmentFactor: 1.0,
+            cohesionFactor: 1.0,
+        };
+
+        function hexToRgba(hex, alpha) {
+            const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function resizeCanvas() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            if (flock.length > 0 && bgSettings.colorMode === 'gradient') {
+                flock.forEach(boid => boid.assignColor());
+            }
+        }
+
+        function resetFlock() {
+            flock = [];
+            for (let i = 0; i < bgSettings.quantity; i++) {
+                flock.push(new Boid(Math.random() * bgCanvas.width, Math.random() * bgCanvas.height, bgSettings));
+            }
+        }
+
+        function animate() {
+            bgCtx.fillStyle = hexToRgba(bgSettings.backgroundColor, bgSettings.backgroundAlpha);
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+            flock.forEach(boid => { boid.flock(flock); boid.update(); boid.draw(bgCtx); });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resizeCanvas, false);
+        resizeCanvas();
+        resetFlock();
+        animate();
+
+
+        // --- Gemini AI Feature Script ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const modalOverlay = document.getElementById('summary-modal-overlay');
+            const modalTitle = document.getElementById('summary-modal-title');
+            const modalContent = document.getElementById('summary-modal-content');
+            const closeModalBtn = document.getElementById('summary-modal-close-btn');
+            const summarizeBtns = document.querySelectorAll('.summarize-btn');
+
+            const showModal = (title, content) => {
+                modalTitle.textContent = title;
+                modalContent.innerHTML = content;
+                modalOverlay.style.display = 'flex';
+            };
+
+            const hideModal = () => {
+                modalOverlay.style.display = 'none';
+            };
+
+            const generateSummary = async (chapterId) => {
+                const chapterElement = document.getElementById(chapterId);
+                const chapterTitle = chapterElement.querySelector('h2').childNodes[0].nodeValue.trim();
+                const chapterText = chapterElement.innerText;
+                
+                showModal(`${chapterTitle} - 要約`, '<div class="spinner"></div>');
+                
+                const prompt = `以下の映画批評の章を、哲学的概念に詳しくない読者向けに、主要な論点とキーワードを箇条書きで分かりやすく要約してください。元の文章の知的で分析的なトーンは維持しつつ、より平易な言葉で説明してください。章のテキスト:\n\n${chapterText}`;
+
+                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = { contents: chatHistory };
+                const apiKey = ""; // APIキーは不要です
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API Error: ${response.statusText}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const summaryText = result.candidates[0].content.parts[0].text;
+                        // 改行を<p>タグに変換して表示
+                        const formattedSummary = summaryText.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p}</p>`).join('');
+                        modalContent.innerHTML = formattedSummary;
+                    } else {
+                         throw new Error('予期せぬAPIレスポンス形式です。');
+                    }
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    modalContent.innerHTML = `<p style="color: #ff6b6b;">要約の生成中にエラーが発生しました。しばらくしてから再度お試しください。</p>`;
+                }
+            };
+
+            summarizeBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetId = e.currentTarget.dataset.target;
+                    generateSummary(targetId);
+                });
+            });
+
+            closeModalBtn.addEventListener('click', hideModal);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) {
+                    hideModal();
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
